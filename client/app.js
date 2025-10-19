@@ -4,8 +4,13 @@ const messagesList = document.getElementById('messages-list');
 const addMessageForm = document.getElementById('add-messages-form');
 const userNameInput = document.getElementById('username');
 const messageContentInput = document.getElementById('message-content');
+const socket = io();
 
 let userName = '';
+
+socket.on('message', ({ author, content }) => addMessage(author, content));
+socket.on('newUser', ({ author, content }) => addMessage(author, content));
+socket.on('removeUser', ({author, content}) => addMessage(author, content));
 
 const login = () => {
   loginForm.addEventListener('submit', (e) =>{
@@ -15,6 +20,7 @@ const login = () => {
       alert('please enter name');
     } else {
       userName = chosenName;
+      socket.emit('join', userName);
       loginForm.classList.remove('show');
       messagesSection.classList.add('show');
     }
@@ -30,6 +36,7 @@ const sendMessage = (e) => {
     alert('enter message');
   } else {
     addMessage(userName, message);
+    socket.emit('message', { author: userName, content: message });
     messageContentInput.value = '';
   };
 };
@@ -43,9 +50,14 @@ const addMessage = (author, content) => {
   if(author === userName){
     message.classList.add('message--self');
   }
+
+  if(author === 'Chat bot'){
+    message.classList.add('chatMessage');
+  }
+
   message.innerHTML = `
     <h3 class= "message__author">${userName === author ? 'You' : author}</h3>
     <div class= "message__content">${content}</div>
   `;
   messagesList.appendChild(message);
-}
+};
